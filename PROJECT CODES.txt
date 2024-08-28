@@ -1,0 +1,188 @@
+CODE:
+
+KAFKA CONSUMER:
+from kafka import KafkaConsumer 
+import json
+
+# Kafka settings
+kafka bootstrap_servers = localhost: 9092'
+kafka_topic ="my-news'
+# Local file settings
+local_file_path = '/home/sairajintoca/news_data. json'
+# Create Kafka consumer
+consumer = KafkaConsumer kafka topic, bootstrap_servers-kafka bootstrap_servers, auto offset_reset='earliest )
+# Open the local file for writing
+with open (Local_file path, 'w') as local_tile:
+# Consume and write to the local file
+for message in consumer:
+article_data = json. loads (message. value. decode ('utf-8'))
+local_file write (json. dumps (article data) + '\n')
+
+# Close the consumer
+consumer. close ()
+
+#from kafka import KafkaConsumer
+#import json
+
+#kafka bootstrap_servers = localhost: 9092'
+*kafka_topic = 'news topic'
+#local_file_path = '/home/sairajintoca/news_data json' # Adjust the path as needed
+
+#consumer = KafkaConsumer (kafka_topic, bootstrap_servers-kafka_bootstrap_servers)
+#for message in consumer:
+
+# article data = json. loads (message. value. decode ('utf-8'))
+# print (article data) # Add this line to print data to the console
+
+KAFKA PRODUCER
+from newsapi import NewsApiClient 
+import json
+from kafka import KafkaProducer
+
+# Get your free API key from https://newsapi.org/, just need to sign up for an account
+key = 241ee1f620264c4e8d7aa25555da145b"
+
+# Initialize api endpoint
+newsapi = NewsApiClient (api_key-key)
+
+# Define the list of media sources
+sources = bbc-news, cnn, fox-news, noc-news, the-guardian-uk, the-new-york-times, the-washington-post, usa-today, independent, daily-mail, war, hamas'
+
+# /v2/everything
+all_articles = newsapi.get_everything (q=' canada',
+                                       sources=sources, 
+                                       language='en ')
+
+# Print the titles of the articles
+for article in all_articles ['articles']:
+print(article['title']
+producer = KafkaProducer(bootstrap_servers='localhost: 9092')
+producer.send ('my-news', json.dumps(article).encode('utf-8'))
+
+
+HIVE
+
+CREATE DATABASE newsapi;
+USE newsapi;
+
+CREATE TABLE  news_data (
+    source_id STRING,
+    source_name STRING,
+    author STRING,
+    title STRING,
+    description STRING,
+    url STRING,
+    urlToImage STRING,
+    publishedAt STRING,
+    content STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH '/home/Bhanusri5rockz/news_data.csv' INTO TABLE news_data;
+
+
+1. Top Authors with Average Article Length:
+
+SELECT author, AVG(LENGTH(content)) as avg_article_length
+FROM news_data
+WHERE content IS NOT NULL
+GROUP BY author
+ORDER BY avg_article_length DESC
+LIMIT 10;
+
+2. Word Count in Articles:
+
+SELECT word, COUNT(*) as word_count
+FROM (
+    SELECT EXPLODE(SPLIT(LOWER(content), ' ')) as word
+    FROM news_data
+    WHERE content IS NOT NULL
+) words
+GROUP BY word
+ORDER BY word_count DESC
+LIMIT 10;
+
+3. Weekday-wise Article Distribution:
+
+SELECT
+    CASE WHEN day_of_week = 1 THEN 'Monday'
+         WHEN day_of_week = 2 THEN 'Tuesday'
+         WHEN day_of_week = 3 THEN 'Wednesday'
+         WHEN day_of_week = 4 THEN 'Thursday'
+         WHEN day_of_week = 5 THEN 'Friday'
+         WHEN day_of_week = 6 THEN 'Saturday'
+         ELSE 'Sunday' END AS weekday,
+    COUNT(*) AS article_count
+FROM
+    (SELECT DAYOFWEEK(publishedAt) AS day_of_week FROM news_data) t
+GROUP BY
+    day_of_week
+ORDER BY
+    day_of_week;
+	
+4. Author Contribution Analysis:
+
+SELECT
+    author,
+    COUNT(*) AS article_count,
+    AVG(LENGTH(content)) AS avg_article_length
+FROM
+    news_data
+GROUP BY
+    author
+ORDER BY
+    article_count DESC;
+
+5. Article Length Distribution:
+
+SELECT
+    PERCENTILE(content_length, 0.25) AS q1,
+    PERCENTILE(content_length, 0.50) AS median,
+    PERCENTILE(content_length, 0.75) AS q3,
+    MAX(content_length) AS max_length
+FROM
+    (SELECT LENGTH(content) AS content_length FROM news_data) t
+
+6. Count Articles Published by Day:
+
+SELECT
+    FROM_UNIXTIME(UNIX_TIMESTAMP(publishedAt, 'yyyy-MM-dd')) AS day,
+    COUNT(*) as article_count
+FROM news_data
+WHERE publishedAt IS NOT NULL
+GROUP BY FROM_UNIXTIME(UNIX_TIMESTAMP(publishedAt, 'yyyy-MM-dd'))
+ORDER BY day;
+
+7. Articles with Short Descriptions but Long Titles:
+
+SELECT title, description, LENGTH(title) as title_length, LENGTH(description) as description_length
+FROM news_data
+WHERE LENGTH(title) > 50 AND LENGTH(description) < 20
+LIMIT 10;
+
+8. Articles with the most images:
+
+ SELECT title, urlToImage
+FROM news_data
+WHERE urlToImage IS NOT NULL
+ORDER BY urlToImage DESC
+LIMIT 10;
+
+9. Temporal analysis of article publication (by hour):
+
+SELECT
+    HOUR(FROM_UNIXTIME(UNIX_TIMESTAMP(publishedAt, 'yyyy-MM-dd\'T\'HH:mm:ss\'Z\''))) AS hour_of_day,
+    COUNT(*) AS article_count
+FROM news_data
+WHERE publishedAt IS NOT NULL
+GROUP BY HOUR(FROM_UNIXTIME(UNIX_TIMESTAMP(publishedAt, 'yyyy-MM-dd\'T\'HH:mm:ss\'Z\'')))
+ORDER BY hour_of_day;
+
+10. Articles mentioning popular entities:
+
+SELECT title, content
+FROM news_data
+WHERE content LIKE '%Microsoft%' OR content LIKE '%Apple%' OR content LIKE '%Google%'
+LIMIT 10;
