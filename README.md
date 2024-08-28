@@ -5,7 +5,7 @@ News Data ETL Pipeline
 Business Scenario:  
 The project involves setting up an ETL pipeline to collect real-time news data from various sources, process it, and store it for further analysis. The pipeline uses Apache Kafka for data ingestion, HDFS for storage, and Apache Hive for querying and analyzing the data. The objective is to streamline the process of gathering news articles on specific topics and gain valuable insights from the data using Hive.
 
-Tasks and Questions:
+Tasks and Questions-:
 
 1. Kafka Broker Setup:  
    - Set up a Kafka broker with Zookeeper to handle the data stream. The broker will manage the data flow between producers (data ingestion from NewsAPI) and consumers (storing data in HDFS).
